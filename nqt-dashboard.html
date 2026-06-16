@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NQT Team Performance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #efede8;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #9a9994;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg2: #252523;
+      --bg3: #2e2e2b;
+      --text: #f0ede8;
+      --text2: #9a9994;
+      --text3: #6b6b67;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+    }
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg3);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container { max-width: 960px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .header-left h1 { font-size: 22px; font-weight: 500; color: var(--text); }
+  .header-left p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .period-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 5px 14px;
+    border-radius: 100px;
+    border: 0.5px solid var(--border2);
+    color: var(--text2);
+    background: var(--bg);
+    white-space: nowrap;
+  }
+  .period-pill svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  /* Metric grid */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .metric-card {
+    background: var(--bg);
+    border-radius: var(--radius-md);
+    padding: .9rem 1rem;
+    border: 0.5px solid var(--border);
+  }
+  .metric-label { font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+  .metric-val { font-size: 22px; font-weight: 500; }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+  /* Grade chips */
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .chip {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 5px 12px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .chip b { color: var(--text); font-weight: 500; }
+
+  /* Section title */
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 12px;
+  }
+
+  /* Table */
+  .table-wrap {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+    overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
+  th {
+    background: var(--bg2);
+    padding: 9px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+    border-bottom: 0.5px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 0.5px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg2); }
+
+  .avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 500;
+    flex-shrink: 0; vertical-align: middle; margin-right: 8px;
+  }
+  .name-cell { display: flex; align-items: center; }
+
+  .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 2px 10px; border-radius: 100px;
+    font-size: 11px; font-weight: 500; min-width: 36px;
+  }
+  .grade-Ap { background: #E1F5EE; color: #04342C; }
+  .grade-A  { background: #EAF3DE; color: #27500A; }
+  .grade-B  { background: #E6F1FB; color: #0C447C; }
+  .grade-C  { background: #FAEEDA; color: #633806; }
+  .grade-D  { background: #FCEBEB; color: #791F1F; }
+
+  .perf-excellent { color: #27500A; font-weight: 500; }
+  .perf-good      { color: #185FA5; font-weight: 500; }
+  .perf-meets     { color: #3B6D11; }
+  .perf-needs     { color: #854F0B; }
+  .perf-poor      { color: #A32D2D; font-weight: 500; }
+
+  .bar-cell { display: flex; align-items: center; gap: 8px; }
+  .bar-bg { height: 6px; background: var(--bg3); border-radius: 3px; flex: 1; min-width: 60px; }
+  .bar-fill { height: 6px; border-radius: 3px; }
+  .bar-pct { font-size: 12px; font-weight: 500; min-width: 42px; text-align: right; }
+
+  /* Charts */
+  .chart-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .chart-wrap { position: relative; width: 100%; height: 260px; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--text2); }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 0.5px solid var(--border);
+  }
+
+  /* Live badge */
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; padding: 3px 10px; border-radius: 100px;
+    background: #EAF3DE; color: #27500A;
+  }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #639922; animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>NQT team performance</h1>
+      <p>Engineer-level sprint outcomes &amp; ratings</p>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+      <div class="period-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        6 Jun – 15 Jun 2025
+      </div>
+      <div class="live-badge"><div class="live-dot"></div> Live dashboard</div>
+    </div>
+  </div>
+
+  <!-- Summary metrics -->
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">Team avg completion</div>
+      <div class="metric-val">57.1%</div>
+      <div class="metric-sub">across 8 engineers</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total planned</div>
+      <div class="metric-val">2,180</div>
+      <div class="metric-sub">outcomes this sprint</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total closed</div>
+      <div class="metric-val">1,238</div>
+      <div class="metric-sub">56.8% of planned</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Top performer</div>
+      <div class="metric-val" style="font-size:16px;padding-top:4px">Saurabh S.</div>
+      <div class="metric-sub">91.9% completion</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">A / A+ engineers</div>
+      <div class="metric-val" style="color:#27500A">2</div>
+      <div class="metric-sub">high performers</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">PIP risk</div>
+      <div class="metric-val" style="color:#A32D2D">3</div>
+      <div class="metric-sub">need attention</div>
+    </div>
+  </div>
+
+  <!-- Grade chips -->
+  <div class="chips">
+    <div class="chip"><b>1</b> engineer rated <b>A+</b></div>
+    <div class="chip"><b>1</b> engineer rated <b>A</b></div>
+    <div class="chip"><b>2</b> engineers rated <b>B</b></div>
+    <div class="chip"><b>1</b> engineer rated <b>C</b></div>
+    <div class="chip"><b>3</b> engineers rated <b>D</b></div>
+  </div>
+
+  <!-- Table -->
+  <div class="section-title">Individual performance</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Engineer</th>
+          <th>Planned</th>
+          <th>Closed</th>
+          <th style="min-width:160px">Completion</th>
+          <th>Rating</th>
+          <th>Performance</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+
+  <!-- Completion chart -->
+  <div class="chart-card">
+    <div class="section-title" style="margin-bottom:16px">Completion rate by engineer</div>
+    <div class="chart-wrap">
+      <canvas id="barChart" role="img" aria-label="Bar chart showing task completion percentage for each engineer">
+        Saurabh Shukla 91.9%, Aakash Sihmar 85%, Pinku Roy 67.5%, Virat Singh 61.2%, Ranjan Kumar 54.4%, Sabir Ali 47.9%, Punit Kumar 30.4%, Vikas Singh 18.2%
+      </canvas>
+    </div>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#639922"></span>≥75% — good</span>
+      <span><span class="legend-dot" style="background:#BA7517"></span>50–74% — needs improvement</span>
+      <span><span class="legend-dot" style="background:#E24B4A"></span>&lt;50% — at risk</span>
+    </div>
+  </div>
+
+  <!-- Planned vs closed chart -->
+  <div class="chart-card">
+    <div class="section-title" style="margin-bottom:16px">Planned vs closed outcomes</div>
+    <div class="chart-wrap" style="height:240px">
+      <canvas id="compareChart" role="img" aria-label="Grouped bar chart comparing planned and closed outcomes per engineer">
+        Planned vs closed: Aakash 80/68, Pinku 80/54, Punit 23/7, Ranjan 436/237, Sabir 557/267, Saurabh 62/57, Vikas 66/12, Virat 876/536
+      </canvas>
+    </div>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#AFA9EC"></span>Planned</span>
+      <span><span class="legend-dot" style="background:#5DCAA5"></span>Closed</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    NQT Dashboard · Sprint 6 Jun – 15 Jun 2025 · Data sourced from Google Sheets
+  </div>
+
+</div>
+
+<script>
+const data = [
+  {name:'Aakash Sihmar',   planned:80,  closed:68,  pct:85.00, rating:'A',  perf:'Good'},
+  {name:'Pinku Roy',       planned:80,  closed:54,  pct:67.50, rating:'B',  perf:'Meets Expectations'},
+  {name:'Punit Kumar',     planned:23,  closed:7,   pct:30.43, rating:'D',  perf:'Poor/PIP Risk'},
+  {name:'Ranjan Kumar',    planned:436, closed:237, pct:54.36, rating:'C',  perf:'Needs Improvement'},
+  {name:'Sabir Ali',       planned:557, closed:267, pct:47.94, rating:'D',  perf:'Poor/PIP Risk'},
+  {name:'Saurabh Shukla',  planned:62,  closed:57,  pct:91.94, rating:'A+', perf:'Excellent'},
+  {name:'Vikas Singh',     planned:66,  closed:12,  pct:18.18, rating:'D',  perf:'Poor/PIP Risk'},
+  {name:'Virat Singh',     planned:876, closed:536, pct:61.19, rating:'B',  perf:'Meets Expectations'},
+];
+
+const AV = ['#EEEDFE','#E1F5EE','#FAECE7','#E6F1FB','#FAEEDA','#FBEAF0','#EAF3DE','#FCEBEB'];
+const TX = ['#3C3489','#085041','#993C1D','#0C447C','#854F0B','#72243E','#27500A','#791F1F'];
+
+function initials(n){return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}
+function barColor(p){return p>=75?'#639922':p>=50?'#BA7517':'#E24B4A'}
+function gradeClass(r){return r==='A+'?'grade-Ap':r==='A'?'grade-A':r==='B'?'grade-B':r==='C'?'grade-C':'grade-D'}
+function perfClass(p){
+  if(p==='Excellent') return 'perf-excellent';
+  if(p==='Good') return 'perf-good';
+  if(p==='Meets Expectations') return 'perf-meets';
+  if(p==='Needs Improvement') return 'perf-needs';
+  return 'perf-poor';
+}
+
+document.getElementById('table-body').innerHTML = data.map((d,i)=>`
+  <tr>
+    <td><div class="name-cell">
+      <span class="avatar" style="background:${AV[i]};color:${TX[i]}">${initials(d.name)}</span>${d.name}
+    </div></td>
+    <td>${d.planned.toLocaleString()}</td>
+    <td>${d.closed.toLocaleString()}</td>
+    <td><div class="bar-cell">
+      <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(d.pct,100)}%;background:${barColor(d.pct)}"></div></div>
+      <span class="bar-pct" style="color:${barColor(d.pct)}">${d.pct.toFixed(1)}%</span>
+    </div></td>
+    <td><span class="badge ${gradeClass(d.rating)}">${d.rating}</span></td>
+    <td><span class="${perfClass(d.perf)}">${d.perf}</span></td>
+  </tr>`).join('');
+
+const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
+const tickColor = isDark ? '#9a9994' : '#6b6b67';
+
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: data.map(d => d.name.split(' ')[0]),
+    datasets: [{
+      label: 'Completion %',
+      data: data.map(d => parseFloat(d.pct.toFixed(1))),
+      backgroundColor: data.map(d => barColor(d.pct)),
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y.toFixed(1)}%` } } },
+    scales: {
+      y: { min:0, max:100, ticks:{ callback:v=>v+'%', font:{size:11}, color:tickColor }, grid:{ color:gridColor } },
+      x: { ticks:{ font:{size:11}, color:tickColor }, grid:{ display:false } }
+    }
+  }
+});
+
+new Chart(document.getElementById('compareChart'), {
+  type: 'bar',
+  data: {
+    labels: data.map(d => d.name.split(' ')[0]),
+    datasets: [
+      { label:'Planned', data:data.map(d=>d.planned), backgroundColor:'#AFA9EC', borderRadius:3 },
+      { label:'Closed',  data:data.map(d=>d.closed),  backgroundColor:'#5DCAA5', borderRadius:3 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { ticks:{ font:{size:11}, color:tickColor }, grid:{ color:gridColor } },
+      x: { ticks:{ font:{size:11}, color:tickColor }, grid:{ display:false } }
+    }
+  }
+});
+</script>
+</body>
+</html>
