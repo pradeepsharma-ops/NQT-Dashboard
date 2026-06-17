@@ -150,13 +150,17 @@ function parseCSV(text){
 }
 
 function mapRow(row){
-  const name=row['engineer name']||row['engineer']||row['name']||'';
-  const planned=parseFloat(row['planned']||row['total planned']||0);
-  const closed=parseFloat(row['closed']||row['total closed']||0);
-  const pct=planned>0?parseFloat(((closed/planned)*100).toFixed(2)):parseFloat(row['completion %']||row['completion']||0);
-  const rating=(row['rating']||row['grade']||'').trim().toUpperCase()||deriveRating(pct);
-  const perf=row['performance']||row['performance rating']||derivePerf(pct);
-  return{name,planned,closed,pct,rating,perf};
+  // Exact headers: Sprint Tenure, Engineer Name, Planned Outcomes, Closed Outcomes, Closed Outcomes %, Blockers, Ratings, Performance
+  const name    = row['engineer name']||row['engineer']||row['name']||'';
+  const planned = parseFloat(row['planned outcomes']||row['planned']||row['total planned']||0);
+  const closed  = parseFloat(row['closed outcomes']||row['closed']||row['total closed']||0);
+  const pct     = planned>0
+                  ? parseFloat(((closed/planned)*100).toFixed(2))
+                  : parseFloat(row['closed outcomes %']||row['completion %']||row['completion']||0);
+  const rating  = (row['ratings']||row['rating']||row['grade']||'').trim().toUpperCase()||deriveRating(pct);
+  const perf    = row['performance']||row['performance rating']||derivePerf(pct);
+  const tenure  = row['sprint tenure']||row['sprint']||'';
+  return{name,planned,closed,pct,rating,perf,tenure};
 }
 function deriveRating(p){return p>=90?'A+':p>=75?'A':p>=60?'B':p>=45?'C':'D';}
 function derivePerf(p){return p>=90?'Excellent':p>=75?'Good':p>=60?'Meets Expectations':p>=45?'Needs Improvement':'Poor/PIP Risk';}
@@ -164,6 +168,8 @@ function derivePerf(p){return p>=90?'Excellent':p>=75?'Good':p>=60?'Meets Expect
 function renderDashboard(data, at){
   document.getElementById('last-sync').textContent='Last synced: '+at.toLocaleTimeString();
   document.getElementById('footer').textContent='NQT Dashboard · Auto-synced from Google Sheets · Last updated '+at.toLocaleString();
+  const tenure=data.find(d=>d.tenure)?.tenure||'Current Sprint';
+  document.getElementById('period-label').textContent=tenure;
   const totalP=data.reduce((a,b)=>a+b.planned,0);
   const totalC=data.reduce((a,b)=>a+b.closed,0);
   const avgPct=data.reduce((a,b)=>a+b.pct,0)/data.length;
@@ -216,7 +222,7 @@ async function loadData(manual=false){
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const text=await res.text();
     const rows=parseCSV(text);
-    const data=rows.map(mapRow).filter(d=>d.name&&d.planned>0);
+    const data=rows.map(mapRow).filter(d=>d.name&&d.name.trim()!=='');
     if(!data.length)throw new Error('No valid rows found');
     renderDashboard(data,new Date());
     countdown=INTERVAL;
