@@ -129,8 +129,8 @@
 </div>
 
 <script>
-const SHEET_ID  = '1ufw_GN6kvvbNkxODyEoPGPl1pnmEYBM8VzgbXScPJ3s';
-const SHEET_GID = '0';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQTn4duHTWBJjhFuRSoq5g6TMoO3OxuerI4wPQ8zP5yLqK9q6lVbfnYjLhZ0GLua4lXjsrvE60kFvvv/pub?output=csv';
+
 const INTERVAL  = 5 * 60; // seconds
 const AV=['#EEEDFE','#E1F5EE','#FAECE7','#E6F1FB','#FAEEDA','#FBEAF0','#EAF3DE','#FCEBEB'];
 const TX=['#3C3489','#085041','#993C1D','#0C447C','#854F0B','#72243E','#27500A','#791F1F'];
@@ -211,7 +211,7 @@ async function loadData(manual=false){
   icon.classList.add('spinning');
   document.getElementById('error-banner').style.display='none';
   try{
-    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}&t=${Date.now()}`;
+    const url = CSV_URL + '&t=' + Date.now();
     const res=await fetch(url);
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const text=await res.text();
