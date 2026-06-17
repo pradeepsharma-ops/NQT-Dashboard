@@ -80,7 +80,7 @@
     <div class="header-right">
       <div class="period-pill">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        6 Jun &ndash; 15 Jun 2025
+        <span id="period-label">6 Jun &ndash; 15 Jun 2025</span>
       </div>
       <div class="sync-bar">
         <div class="live-badge"><div class="live-dot"></div> Live</div>
@@ -221,9 +221,18 @@ async function loadData(manual=false){
     const res=await fetch(url);
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const text=await res.text();
+    const rawLines=text.trim().split('\n');
+    console.log('HEADERS RAW:', rawLines[0]);
+    console.log('ROW1 RAW:', rawLines[1]);
     const rows=parseCSV(text);
+    console.log('HEADERS PARSED:', Object.keys(rows[0]||{}));
+    console.log('FIRST ROW PARSED:', rows[0]);
     const data=rows.map(mapRow).filter(d=>d.name&&d.name.trim()!=='');
-    if(!data.length)throw new Error('No valid rows found');
+    console.log('MAPPED ROWS:', data.length, data);
+    if(!data.length){
+      const detected=Object.keys(rows[0]||{}).join(' | ');
+      throw new Error('No valid rows. Headers detected: ['+detected+']');
+    }
     renderDashboard(data,new Date());
     countdown=INTERVAL;
     if(manual){document.getElementById('last-sync').textContent='Just refreshed \u2713';setTimeout(()=>{document.getElementById('last-sync').textContent='Last synced: '+new Date().toLocaleTimeString();},2500);}
