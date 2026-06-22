@@ -105,6 +105,35 @@
     </div>
   </div>
 
+  <div class="section-title" style="margin-bottom:12px">Task definitions</div>
+  <div class="section-title" style="margin-top:1.25rem">Task definitions</div>
+  <div class="task-def-grid">
+    <div class="task-def-card">
+      <div class="task-def-header"><span class="task-icon" style="background:#EEEDFE;color:#3C3489">SM</span><span class="task-name-label">Surgical Migration</span></div>
+      <p class="task-def-body">When CSP tickets remain unresolved for more than 72 hours, the affected customer (CX) must be migrated to a nearby overlapping CSP.</p>
+    </div>
+    <div class="task-def-card">
+      <div class="task-def-header"><span class="task-icon" style="background:#FAECE7;color:#993C1D">EM</span><span class="task-name-label">Exit Migration</span></div>
+      <p class="task-def-body">The entire U1 customer base (CX) of a CSP exiting Wiom must be migrated to a nearby overlapping CSP.</p>
+    </div>
+    <div class="task-def-card">
+      <div class="task-def-header"><span class="task-icon" style="background:#E6F1FB;color:#0C447C">DP</span><span class="task-name-label">Device Pickups</span></div>
+      <p class="task-def-body">The entire U2 customer base of a CSP exiting Wiom requires device collection from customers' homes.</p>
+    </div>
+    <div class="task-def-card">
+      <div class="task-def-header"><span class="task-icon" style="background:#E1F5EE;color:#04342C">TL</span><span class="task-name-label">TrustLine</span></div>
+      <p class="task-def-body">Any technical issue that the PTL team is unable to resolve will be escalated to the NQT team through the TrustLine Slack channel.</p>
+    </div>
+    <div class="task-def-card">
+      <div class="task-def-header"><span class="task-icon" style="background:#FAEEDA;color:#633806">CV</span><span class="task-name-label">CSP Visit</span></div>
+      <p class="task-def-body">If a TrustLine technical issue cannot be resolved remotely, the team must visit the CSP office after scheduling an appointment.</p>
+    </div>
+    <div class="task-def-card">
+      <div class="task-def-header"><span class="task-icon" style="background:#FBEAF0;color:#72243E">NV</span><span class="task-name-label">NTT Visit</span></div>
+      <p class="task-def-body">Required for network monitoring, network assessment, and network design activities in coordination with the NTT team.</p>
+    </div>
+  </div>
+
   <div class="error-banner" id="error-banner"></div>
   <div id="loading" class="loading-overlay">&#9203; Fetching daily closures from Google Sheets...</div>
 
@@ -136,85 +165,10 @@
       </div>
     </div>
 
-    <!-- Task Definitions -->
-    <div class="section-title" style="margin-top:.25rem">Task definitions</div>
-    <div class="task-def-grid">
-      <div class="task-def-card">
-        <div class="task-def-header">
-          <span class="task-icon" style="background:#EEEDFE;color:#3C3489">SM</span>
-          <span class="task-name-label">Surgical Migration</span>
-        </div>
-        <p class="task-def-body">When CSP tickets remain unresolved for more than 72 hours, the affected customer (CX) must be migrated to a nearby overlapping CSP.</p>
-      </div>
-      <div class="task-def-card">
-        <div class="task-def-header">
-          <span class="task-icon" style="background:#FAECE7;color:#993C1D">EM</span>
-          <span class="task-name-label">Exit Migration</span>
-        </div>
-        <p class="task-def-body">The entire U1 customer base (CX) of a CSP exiting Wiom must be migrated to a nearby overlapping CSP.</p>
-      </div>
-      <div class="task-def-card">
-        <div class="task-def-header">
-          <span class="task-icon" style="background:#E6F1FB;color:#0C447C">DP</span>
-          <span class="task-name-label">Device Pickups</span>
-        </div>
-        <p class="task-def-body">The entire U2 customer base of a CSP exiting Wiom requires device collection from customers' homes.</p>
-      </div>
-      <div class="task-def-card">
-        <div class="task-def-header">
-          <span class="task-icon" style="background:#E1F5EE;color:#04342C">TL</span>
-          <span class="task-name-label">TrustLine</span>
-        </div>
-        <p class="task-def-body">Any technical issue that the PTL team is unable to resolve will be escalated to the NQT team through the TrustLine Slack channel.</p>
-      </div>
-      <div class="task-def-card">
-        <div class="task-def-header">
-          <span class="task-icon" style="background:#FAEEDA;color:#633806">CV</span>
-          <span class="task-name-label">CSP Visit</span>
-        </div>
-        <p class="task-def-body">If a TrustLine technical issue cannot be resolved remotely, the team must visit the CSP office after scheduling an appointment.</p>
-      </div>
-      <div class="task-def-card">
-        <div class="task-def-header">
-          <span class="task-icon" style="background:#FBEAF0;color:#72243E">NV</span>
-          <span class="task-name-label">NTT Visit</span>
-        </div>
-        <p class="task-def-body">Required for network monitoring, network assessment, and network design activities in coordination with the NTT team.</p>
-      </div>
-    </div>
-  </div>
+
   <!-- End dashboard div -->
 
-  <!-- Task Definitions always visible below dashboard -->
-  <div class="section-title" style="margin-top:1.25rem">Task definitions</div>
-  <div class="task-def-grid">
-    <div class="task-def-card">
-      <div class="task-def-header"><span class="task-icon" style="background:#EEEDFE;color:#3C3489">SM</span><span class="task-name-label">Surgical Migration</span></div>
-      <p class="task-def-body">When CSP tickets remain unresolved for more than 72 hours, the affected customer (CX) must be migrated to a nearby overlapping CSP.</p>
-    </div>
-    <div class="task-def-card">
-      <div class="task-def-header"><span class="task-icon" style="background:#FAECE7;color:#993C1D">EM</span><span class="task-name-label">Exit Migration</span></div>
-      <p class="task-def-body">The entire U1 customer base (CX) of a CSP exiting Wiom must be migrated to a nearby overlapping CSP.</p>
-    </div>
-    <div class="task-def-card">
-      <div class="task-def-header"><span class="task-icon" style="background:#E6F1FB;color:#0C447C">DP</span><span class="task-name-label">Device Pickups</span></div>
-      <p class="task-def-body">The entire U2 customer base of a CSP exiting Wiom requires device collection from customers' homes.</p>
-    </div>
-    <div class="task-def-card">
-      <div class="task-def-header"><span class="task-icon" style="background:#E1F5EE;color:#04342C">TL</span><span class="task-name-label">TrustLine</span></div>
-      <p class="task-def-body">Any technical issue that the PTL team is unable to resolve will be escalated to the NQT team through the TrustLine Slack channel.</p>
-    </div>
-    <div class="task-def-card">
-      <div class="task-def-header"><span class="task-icon" style="background:#FAEEDA;color:#633806">CV</span><span class="task-name-label">CSP Visit</span></div>
-      <p class="task-def-body">If a TrustLine technical issue cannot be resolved remotely, the team must visit the CSP office after scheduling an appointment.</p>
-    </div>
-    <div class="task-def-card">
-      <div class="task-def-header"><span class="task-icon" style="background:#FBEAF0;color:#72243E">NV</span><span class="task-name-label">NTT Visit</span></div>
-      <p class="task-def-body">Required for network monitoring, network assessment, and network design activities in coordination with the NTT team.</p>
-    </div>
-  </div>
-
-  <div class="footer" id="footer"></div>
+    <div class="footer" id="footer"></div>
 </div>
 
 <script>
