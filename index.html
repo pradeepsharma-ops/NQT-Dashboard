@@ -216,9 +216,21 @@ let customFrom=null,customTo=null;
 function initials(n){return(n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
 function barColor(p){return p>=75?'#639922':p>=50?'#BA7517':'#E24B4A';}
 function gradeClass(r){return r==='A+'?'grade-Ap':r==='A'?'grade-A':r==='B'?'grade-B':r==='C'?'grade-C':'grade-D';}
-function perfClass(p){if(p==='Excellent')return'perf-excellent';if(p==='Good')return'perf-good';if(p==='Meets Expectations')return'perf-meets';if(p==='Needs Improvement')return'perf-needs';return'perf-poor';}
-function deriveRating(p){return p>=90?'A+':p>=75?'A':p>=60?'B':p>=45?'C':'D';}
-function derivePerf(p){return p>=90?'Excellent':p>=75?'Good':p>=60?'Meets Expectations':p>=45?'Needs Improvement':'Poor/PIP Risk';}
+function perfClass(p){
+  if(p==='Excellent') return 'perf-excellent';
+  if(p==='Above Expectations') return 'perf-good';
+  if(p==='Meets Expectations') return 'perf-meets';
+  if(p==='Below Expectations') return 'perf-needs';
+  return 'perf-poor';
+}
+function deriveRating(p){return p>=90?'A+':p>=80?'A':p>=60?'B':p>=50?'C':'D';}
+function derivePerf(p){
+  if(p>=90) return 'Excellent';
+  if(p>=80) return 'Above Expectations';
+  if(p>=60) return 'Meets Expectations';
+  if(p>=50) return 'Below Expectations';
+  return 'Needs Improvement / PIP';
+}
 
 function parseCSV(text){
   const lines=text.trim().split('\n').map(l=>l.split(',').map(c=>c.replace(/^"|"$/g,'').trim()));
@@ -292,16 +304,12 @@ function aggregateRows(rows,start,end){
     byEng[r.name].closed+=r.closed;
     if(r.rating)byEng[r.name].ratings.push(r.rating);
   });
-  const RS={'A+':5,'A':4,'B':3,'C':2,'D':1};
-  const SR={5:'A+',4:'A',3:'B',2:'C',1:'D'};
   return Object.values(byEng).map(e=>{
     const pct=e.planned>0?parseFloat(((e.closed/e.planned)*100).toFixed(2)):0;
-    let rating;
-    if(e.ratings.length){
-      const avg=Math.round(e.ratings.reduce((a,r)=>a+(RS[r]||3),0)/e.ratings.length);
-      rating=SR[avg]||deriveRating(pct);
-    } else {rating=deriveRating(pct);}
-    return{name:e.name,planned:e.planned,closed:e.closed,pct,rating,perf:derivePerf(pct)};
+    // Always derive rating and performance from actual pct using official thresholds
+    const rating=deriveRating(pct);
+    const perf=derivePerf(pct);
+    return{name:e.name,planned:e.planned,closed:e.closed,pct,rating,perf};
   }).sort((a,b)=>b.pct-a.pct);
 }
 
