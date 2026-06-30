@@ -257,8 +257,8 @@ function mapRow(row){
   const name=row['engineer name']||row['engineer']||row['name']||'';
   const planned=parseFloat(row['expected outcome']||row['expected outcomes']||row['planned']||0)||0;
   const closed=parseFloat(row['closure outcome']||row['closure outcomes']||row['closed']||0)||0;
-  const rating=(row['rating']||row['ratings']||'').trim().toUpperCase();
-  return{date,name,planned,closed,rating};
+  // Rating is NEVER read from sheet — always derived from actual completion %
+  return{date,name,planned,closed};
 }
 
 function getDateRange(view){
@@ -299,18 +299,21 @@ function aggregateRows(rows,start,end){
   const inRange=rows.filter(r=>r.date&&r.date>=s&&r.date<=e&&r.name);
   const byEng={};
   inRange.forEach(r=>{
-    if(!byEng[r.name])byEng[r.name]={name:r.name,planned:0,closed:0,ratings:[]};
+    if(!byEng[r.name])byEng[r.name]={name:r.name,planned:0,closed:0};
     byEng[r.name].planned+=r.planned;
     byEng[r.name].closed+=r.closed;
-    if(r.rating)byEng[r.name].ratings.push(r.rating);
   });
-  return Object.values(byEng).map(e=>{
-    const pct=e.planned>0?parseFloat(((e.closed/e.planned)*100).toFixed(2)):0;
-    // Always derive rating and performance from actual pct using official thresholds
-    const rating=deriveRating(pct);
-    const perf=derivePerf(pct);
-    return{name:e.name,planned:e.planned,closed:e.closed,pct,rating,perf};
-  }).sort((a,b)=>b.pct-a.pct);
+  return Object.values(byEng)
+    .filter(e=>e.planned>0) // exclude engineers with 0 planned outcomes — no rating/performance possible
+    .map(e=>{
+      const pct=parseFloat(((e.closed/e.planned)*100).toFixed(2));
+      // Rating & performance ALWAYS derived from completion % using official thresholds:
+      // >=90% A+ Excellent | >=80% A Above Expectations | >=60% B Meets Expectations
+      // >=50% C Below Expectations | <50% D Needs Improvement/PIP
+      const rating=deriveRating(pct);
+      const perf=derivePerf(pct);
+      return{name:e.name,planned:e.planned,closed:e.closed,pct,rating,perf};
+    }).sort((a,b)=>b.pct-a.pct);
 }
 
 const VIEW_LABELS={day:'Day view',week:'Week view',sprint:'Sprint view',month:'Month view',custom:'Custom range'};
