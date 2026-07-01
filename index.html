@@ -92,6 +92,8 @@ tr:hover td{background:var(--bg2);}
 .task-name-label{font-size:13px;font-weight:500;color:var(--text);}
 .task-def-body{font-size:12px;color:var(--text2);line-height:1.6;}
 .no-data{text-align:center;padding:2rem;color:var(--text3);font-size:13px;}
+.period-select{font-size:12px;padding:5px 12px;border-radius:var(--radius-lg);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;height:32px;min-width:200px;}
+.period-select:focus{outline:none;border-color:var(--border2);}
 </style>
 </head>
 <body>
@@ -160,6 +162,18 @@ tr:hover td{background:var(--bg2);}
         <span id="period-text">Loading...</span>
       </div>
       <span class="view-badge" id="view-badge">Sprint view</span>
+    </div>
+
+    <!-- Sprint dropdown (shown only in sprint view) -->
+    <div id="sprint-selector-box" style="display:none;margin-bottom:1rem;">
+      <label style="font-size:11px;color:var(--text2);margin-right:8px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;">Select Sprint</label>
+      <select id="sprint-select" class="period-select" onchange="onSprintSelect()"></select>
+    </div>
+
+    <!-- Month dropdown (shown only in month view) -->
+    <div id="month-selector-box" style="display:none;margin-bottom:1rem;">
+      <label style="font-size:11px;color:var(--text2);margin-right:8px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;">Select Month</label>
+      <select id="month-select" class="period-select" onchange="onMonthSelect()"></select>
     </div>
 
     <div class="custom-box" id="custom-box">
@@ -318,12 +332,112 @@ function aggregateRows(rows,start,end){
 
 const VIEW_LABELS={day:'Day view',week:'Week view',sprint:'Sprint view',month:'Month view',custom:'Custom range'};
 
+function buildSprintOptions(rows){
+  const sprints={};
+  rows.forEach(r=>{
+    if(!r.date)return;
+    const y=r.date.getFullYear(),mo=r.date.getMonth(),day=r.date.getDate();
+    let key,label,start,end;
+    if(day<=15){
+      key=y+'-'+mo+'-1';
+      start=new Date(y,mo,1);end=new Date(y,mo,15);
+      label=fmtDate(start)+' – '+fmtDate(end);
+    } else {
+      key=y+'-'+mo+'-16';
+      start=new Date(y,mo,16);end=new Date(y,mo+1,0);
+      label=fmtDate(start)+' – '+fmtDate(end);
+    }
+    if(!sprints[key])sprints[key]={key,label,start,end};
+  });
+  return Object.values(sprints).sort((a,b)=>b.start-a.start);
+}
+
+function buildMonthOptions(rows){
+  const months={};
+  rows.forEach(r=>{
+    if(!r.date)return;
+    const y=r.date.getFullYear(),mo=r.date.getMonth();
+    const key=y+'-'+mo;
+    if(!months[key]){
+      const start=new Date(y,mo,1),end=new Date(y,mo+1,0);
+      const label=start.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+      months[key]={key,label,start,end};
+    }
+  });
+  return Object.values(months).sort((a,b)=>b.start-a.start);
+}
+
+let sprintOptions=[], monthOptions=[];
+let selectedSprint=null, selectedMonth=null;
+
+function populateSprints(){
+  sprintOptions=buildSprintOptions(allRows);
+  const sel=document.getElementById('sprint-select');
+  sel.innerHTML=sprintOptions.map(s=>`<option value="${s.key}">${s.label}</option>`).join('');
+  // Default to current sprint
+  const today=new Date();today.setHours(0,0,0,0);
+  const day=today.getDate(),y=today.getFullYear(),mo=today.getMonth();
+  const curKey=day<=15?y+'-'+mo+'-1':y+'-'+mo+'-16';
+  const match=sprintOptions.find(s=>s.key===curKey);
+  selectedSprint=match||sprintOptions[0];
+  if(selectedSprint)sel.value=selectedSprint.key;
+}
+
+function populateMonths(){
+  monthOptions=buildMonthOptions(allRows);
+  const sel=document.getElementById('month-select');
+  sel.innerHTML=monthOptions.map(m=>`<option value="${m.key}">${m.label}</option>`).join('');
+  // Default to current month
+  const today=new Date();
+  const curKey=today.getFullYear()+'-'+today.getMonth();
+  const match=monthOptions.find(m=>m.key===curKey);
+  selectedMonth=match||monthOptions[0];
+  if(selectedMonth)sel.value=selectedMonth.key;
+}
+
+function onSprintSelect(){
+  const key=document.getElementById('sprint-select').value;
+  selectedSprint=sprintOptions.find(s=>s.key===key);
+  if(selectedSprint){
+    document.getElementById('period-text').textContent=selectedSprint.label;
+    const days=Math.round((selectedSprint.end-selectedSprint.start)/86400000)+1;
+    document.getElementById('table-title').textContent='Engineer-wise summary ('+days+' days)';
+    const data=aggregateRows(allRows,selectedSprint.start,selectedSprint.end);
+    if(!data.length){showNoData();return;}
+    renderDashboard(data);
+  }
+}
+
+function onMonthSelect(){
+  const key=document.getElementById('month-select').value;
+  selectedMonth=monthOptions.find(m=>m.key===key);
+  if(selectedMonth){
+    document.getElementById('period-text').textContent=selectedMonth.label;
+    const days=Math.round((selectedMonth.end-selectedMonth.start)/86400000)+1;
+    document.getElementById('table-title').textContent='Engineer-wise summary ('+days+' days)';
+    const data=aggregateRows(allRows,selectedMonth.start,selectedMonth.end);
+    if(!data.length){showNoData();return;}
+    renderDashboard(data);
+  }
+}
+
+function showNoData(){
+  document.getElementById('table-body').innerHTML='<tr><td colspan="6" class="no-data">No data found for this period. Check your Google Sheet has entries in this date range.</td></tr>';
+  document.getElementById('summary-cards').innerHTML='';
+  document.getElementById('grade-chips').innerHTML='';
+  if(bar1)bar1.destroy();if(bar2)bar2.destroy();
+}
+
 function setView(view,btn){
   currentView=view;
   document.querySelectorAll('.vtab').forEach(t=>t.classList.remove('active'));
   if(btn)btn.classList.add('active');
   document.getElementById('custom-box').className='custom-box'+(view==='custom'?' show':'');
   document.getElementById('view-badge').textContent=VIEW_LABELS[view];
+  document.getElementById('sprint-selector-box').style.display=view==='sprint'?'block':'none';
+  document.getElementById('month-selector-box').style.display=view==='month'?'block':'none';
+  if(view==='sprint'){onSprintSelect();return;}
+  if(view==='month'){onMonthSelect();return;}
   if(view!=='custom')renderView(view);
 }
 
@@ -420,6 +534,8 @@ async function loadData(manual=false){
     const today=new Date();
     document.getElementById('from-date').value=today.toISOString().split('T')[0];
     document.getElementById('to-date').value=today.toISOString().split('T')[0];
+    populateSprints();
+    populateMonths();
     renderView(currentView);
     document.getElementById('last-sync').textContent='Last synced: '+new Date().toLocaleTimeString();
     document.getElementById('footer').textContent='NQT Dashboard \u00B7 Auto-synced from "Closure of the Day" \u00B7 Updated '+new Date().toLocaleString();
